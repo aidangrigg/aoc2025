@@ -1,13 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define BUFFER_SIZE 10000
+
 typedef struct {
   char dir;
   int amount;
 } Rotation;
 
-
 int solveP1(Rotation rs[], size_t rs_len);
+int solveP2(Rotation rs[], size_t rs_len);
 
 int solveP1(Rotation rs[], size_t rs_len) {
   int zeros = 0, current = 50;
@@ -15,18 +17,7 @@ int solveP1(Rotation rs[], size_t rs_len) {
   for (int i = 0; i < rs_len; i++) {
     Rotation r = rs[i];
     int d = r.dir == 'R' ? r.amount : -r.amount;
-
-    current += d;
-
-    while (current < 0) {
-      current += 100;
-    }
-
-    while (current > 99) {
-      current -= 100;
-    }
-
-    printf("current: %d\n", current);
+    current = (current + d) % 100;
 
     if (current == 0) {
       zeros += 1;
@@ -36,10 +27,27 @@ int solveP1(Rotation rs[], size_t rs_len) {
   return zeros;
 }
 
-#define BUFFER_SIZE 10000
+int solveP2(Rotation rs[], size_t rs_len) {
+  int zeros = 0, current = 50;
+
+  for (int i = 0; i < rs_len; i++) {
+    Rotation r = rs[i];
+    int direction = r.dir == 'R' ? 1 : -1;
+
+    for (int j = 0; j < r.amount; j++) {
+      current = (current + direction) % 100;
+
+      if (current == 0) {
+        zeros += 1;
+      }
+    }
+  }
+
+  return zeros;
+}
 
 int main() {
-  FILE* fptr = fopen("./inputs/day1.real", "r");
+  FILE *fptr = fopen("./inputs/day1.real", "r");
 
   if (fptr == NULL) {
     printf("An error occured reading the file\n");
@@ -51,10 +59,8 @@ int main() {
 
   char line[100];
   while (fgets(line, sizeof(line), fptr)) {
-    rotations[rotations_len] = (Rotation){
-      .dir = line[0],
-      .amount = atoi(&line[1])
-    };
+    rotations[rotations_len] =
+        (Rotation){.dir = line[0], .amount = atoi(&line[1])};
 
     rotations_len += 1;
 
@@ -65,8 +71,8 @@ int main() {
   }
 
   printf("Part 1: %d \n", solveP1(rotations, rotations_len));
+  printf("Part 2: %d \n", solveP2(rotations, rotations_len));
 
   fclose(fptr);
   return 0;
 }
-
