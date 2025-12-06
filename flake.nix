@@ -15,6 +15,7 @@
             gnumake
             ccls
             gdb
+            valgrind
           ];
         };
       });
