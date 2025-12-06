@@ -1,11 +1,11 @@
+#include <assert.h>
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
 
-#define BUFFER_LEN 10000
+#define BUFFER_LEN 5000
 
 int input[BUFFER_LEN][BUFFER_LEN];
 size_t rows = 0;
@@ -15,37 +15,34 @@ char operations[BUFFER_LEN];
 size_t ops_len = 0;
 
 long long solveP1();
-long long solveP2();
+long long solveP2(char *filename);
 
 long long solveP1() {
   long long ans = 0;
 
-  /* printf("cols: %zu, ops_len: %zu\n", cols, ops_len); */
   assert(cols == ops_len);
-  for(int c = 0; c < cols; c++) {
+  for (int c = 0; c < cols; c++) {
     long long sum = operations[c] == '+' ? 0 : 1;
     for (int r = 0; r < rows; r++) {
       if (operations[c] == '+') {
-        /* printf("add: %d\n", input[r][c]); */
         sum += input[r][c];
       } else {
-        /* printf("mult: %d\n", input[r][c]); */
         sum *= input[r][c];
       }
     }
-    /* printf("sum: %lld\n", sum); */
     ans += sum;
   }
   return ans;
 }
 
-long long solveP2() {
+long long solveP2(char *filename) {
   long long ans = 0;
-  return ans;
-}
+  char numbers[5][BUFFER_LEN];
+  int rows = 0;
+  int cols = 0;
+  char ops[BUFFER_LEN];
 
-int main() {
-  FILE *fptr = fopen("./inputs/day6.real", "r");
+  FILE *fptr = fopen(filename, "r");
 
   if (fptr == NULL) {
     printf("An error occured reading the file\n");
@@ -53,7 +50,61 @@ int main() {
   }
 
   char line[BUFFER_LEN];
+  while (fgets(line, sizeof(line), fptr) != NULL) {
+    if (*line == '+' || *line == '*') {
+      strcpy(ops, line);
+      cols = strlen(line);
+    } else {
+      strcpy(numbers[rows], line);
+      rows += 1;
+    }
+  }
 
+  fclose(fptr);
+
+  for (int c = 0; c < cols; c++) {
+    if (ops[c] == ' ')
+      continue;
+    char op = ops[c];
+
+    int n_idx = c;
+    long sum = op == '+' ? 0 : 1;
+    while (true) {
+      long n = 0;
+      for (int r = 0; r < rows; r++) {
+        if (numbers[r][n_idx] != ' ') {
+          n *= 10;
+          n += numbers[r][n_idx] - '0';
+        }
+      }
+
+      n_idx += 1;
+
+      if (n == 0 || n_idx >= cols)
+        break;
+
+      if (op == '+') {
+        sum += n;
+      } else {
+        sum *= n;
+      }
+    }
+    ans += sum;
+  }
+
+  return ans - 1;
+}
+
+int main() {
+  char *filename = "./inputs/day6.real";
+  FILE *fptr = fopen(filename, "r");
+
+  if (fptr == NULL) {
+    printf("An error occured reading the file\n");
+    return 1;
+  }
+
+  char line[BUFFER_LEN];
   while (fgets(line, sizeof(line), fptr) != NULL) {
     char *tok = strtok(line, " ");
     size_t col = 0;
@@ -61,8 +112,7 @@ int main() {
       if (*tok == '+' || *tok == '*') {
         operations[ops_len] = *tok;
         ops_len += 1;
-      } else if(*tok != '\n') {
-        /* printf("token: %s\n", tok); */
+      } else if (*tok != '\n') {
         input[rows][col] = atoi(tok);
         col += 1;
       }
@@ -74,8 +124,10 @@ int main() {
   }
   rows -= 1;
 
+  fclose(fptr);
+
   printf("Part 1: %lld\n", solveP1());
-  printf("Part 2: %lld\n", solveP2());
+  printf("Part 2: %lld\n", solveP2(filename));
 
   return 0;
 }
