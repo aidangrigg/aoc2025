@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define BUFFER_LEN 5000
+#define BUFFER_LEN 150
 #define VISITED_SPLIT '+'
 #define BEAM '|'
 
@@ -13,10 +13,14 @@ char input[BUFFER_LEN][BUFFER_LEN];
 size_t rows = 0;
 size_t cols = 0;
 
+long timelines[BUFFER_LEN][BUFFER_LEN];
+
 long long solveP1();
 long long solveP2();
+long count_timelines(int row, int col);
+void traverse_beam(int r, int c);
 
-void check_beam(int r, int c) {
+void traverse_beam(int r, int c) {
   if (c < 0 || c >= cols)
     return;
   for (int r1 = r; r1 < rows; r1++) {
@@ -25,9 +29,9 @@ void check_beam(int r, int c) {
     }
     if (input[r1][c] == '^') {
       input[r1][c] = VISITED_SPLIT;
-      check_beam(r1, c - 1);
-      check_beam(r1, c + 1);
-      break;
+      traverse_beam(r1, c - 1);
+      traverse_beam(r1, c + 1);
+      return;
     } else {
       input[r1][c] = '|';
     }
@@ -36,14 +40,6 @@ void check_beam(int r, int c) {
 
 long long solveP1() {
   long long ans = 0;
-
-  for (int c = 0; c < cols; c++) {
-    if (input[0][c] == 'S') {
-      check_beam(1, c);
-      break;
-    }
-  }
-
   for (int r = 0; r < rows; r++) {
     for (int c = 0; c < cols; c++) {
       printf("%c", input[r][c]);
@@ -53,7 +49,29 @@ long long solveP1() {
   return ans;
 }
 
-long long solveP2() {}
+long count_timelines(int row, int col) {
+  for (int r = row; r < rows; r++) {
+    if (input[r][col] == VISITED_SPLIT) {
+      if (timelines[r][col] <= 0) {
+        timelines[r][col] = count_timelines(r, col + 1) + count_timelines(r, col - 1);
+      }
+      return timelines[r][col];
+    }
+  }
+
+  return 1;
+}
+
+long long solveP2() {
+  for (int c = 0; c < cols; c++) {
+    if (input[0][c] == 'S') {
+      timelines[0][c] = 1;
+      return count_timelines(0, c);
+    }
+  }
+
+  return -1;
+}
 
 int main() {
   char *filename = "./inputs/day7.real";
@@ -70,6 +88,13 @@ int main() {
     rows += 1;
   }
   cols = strlen(input[0]);
+
+  for (int c = 0; c < cols; c++) {
+    if (input[0][c] == 'S') {
+      traverse_beam(1, c);
+      break;
+    }
+  }
 
   fclose(fptr);
   printf("Part 1: %lld\n", solveP1());
