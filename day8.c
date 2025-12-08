@@ -50,9 +50,7 @@ size_t dsu_find(DSU *dsu, size_t x) {
 
 void dsu_union(DSU *dsu, size_t a, size_t b) {
   a = dsu_find(dsu, a), b = dsu_find(dsu, b);
-  if (a == b) {
-    return;
-  }
+  if (a == b) return;
   if (dsu->rank[a] > dsu->rank[b]) {
     size_t tmp = a;
     a = b;
@@ -87,6 +85,8 @@ int comp(const void *a, const void *b) { return (*(long *)b - *(long *)a); }
 long long solveP1(int connections) {
   DSU dsu;
   dsu_init(&dsu);
+  compute_distances();
+
   const size_t n = junction_len;
 
   for (int con = 0; con < connections; con++) {
@@ -114,16 +114,17 @@ long long solveP1(int connections) {
 long long solveP2() {
   DSU dsu;
   dsu_init(&dsu);
+  compute_distances();
+
   const size_t n = junction_len;
 
-  bool new_connection = true;
   size_t si = 0, sj = 0;
   while (true) {
-    double smallest = 1000000000;
+    double smallest = 10000000000;
     si = 0, sj = 0;
     for (int i = 0; i < n; i++) {
       for (int j = 0; j < n; j++) {
-        if (distances[i][j] > 0 && distances[i][j] <= smallest) {
+        if (distances[i][j] > 0 && distances[i][j] < smallest) {
           si = i;
           sj = j;
           smallest = distances[i][j];
@@ -135,24 +136,16 @@ long long solveP2() {
     distances[si][sj] = -1;
     distances[sj][si] = -1;
 
-    printf("---\n");
-    for (int i = 0; i < junction_len; i++) {
-      printf("circuit: %ld\n", dsu.circuits[i]);
-    }
-
-    if (dsu.circuits[dsu_find(&dsu, sj)] >= n) {
+    if (dsu.circuits[dsu_find(&dsu, sj)] == n) {
       break;
     }
   }
-
-  printf("si: %zu\n", junctions[si].x);
-  printf("sj: %zu\n", junctions[sj].x);
 
   return junctions[si].x * junctions[sj].x;
 }
 
 int main() {
-  char *filename = "./inputs/day8.example";
+  char *filename = "./inputs/day8.real";
   FILE *fptr = fopen(filename, "r");
 
   if (fptr == NULL) {
@@ -174,8 +167,6 @@ int main() {
   }
 
   fclose(fptr);
-
-  compute_distances();
 
   printf("Part 1: %lld\n", solveP1(10));
   printf("Part 2: %lld\n", solveP2());
